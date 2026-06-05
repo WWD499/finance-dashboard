@@ -24,3 +24,4 @@ package-lock.json
 
 # 项目数据（CSV 含原始数据，按需是否提交）
 data/
+flask.log
