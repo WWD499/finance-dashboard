@@ -1,0 +1,15 @@
+ * Tip: There are .env files present. Install python-dotenv to use them.
+📊 正在从 MySQL 加载数据...
+   上证综指: 7694 条  (1990-12-19 ~ 2022-06-17)
+   深证成指: 7603 条  (1991-04-03 ~ 2022-06-17)
+   沪市两融: 2968 条  (2010-03-31 ~ 2022-06-17)
+   深市两融: 2967 条  (2010-03-31 ~ 2022-06-16)
+✅ 数据加载完成
+
+🚀 金融数据分析系统启动中...
+🌐 访问地址: http://127.0.0.1:5000
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit

@@ -3,41 +3,39 @@
 数据源: MySQL 数据库 finance_db
 """
 import os
-import pymysql
+import urllib.parse
 import pandas as pd
 import numpy as np
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from datetime import datetime
+from sqlalchemy import create_engine
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # ─── MySQL 配置（从环境变量读取，本地开发用 .env） ───────────────
-MYSQL_CONFIG = {
-    'host':    os.getenv('DB_HOST', 'localhost'),
-    'user':    os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASS', 'Admin@123'),
-    'database': os.getenv('DB_NAME', 'finance_db'),
-    'charset': 'utf8mb4',
-    'cursorclass': pymysql.cursors.DictCursor,
-}
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_USER = os.getenv('DB_USER', 'root')
+DB_PASS = os.getenv('DB_PASS', 'Admin@123')
+DB_NAME = os.getenv('DB_NAME', 'finance_db')
+
+# URL 编码密码中的特殊字符（如 @ # : / 等）
+ENCODED_PASS = urllib.parse.quote_plus(DB_PASS)
+ENGINE = create_engine(
+    f'mysql+pymysql://{DB_USER}:{ENCODED_PASS}@{DB_HOST}:3306/{DB_NAME}?charset=utf8mb4'
+)
 
 # ─── 全局加载数据（从 MySQL 读取到 pandas） ─────────────────────────
 def load_data():
-    conn = pymysql.connect(**MYSQL_CONFIG)
-    try:
-        sh_idx = pd.read_sql("SELECT * FROM sh_index ORDER BY trade_date", conn)
-        sz_idx = pd.read_sql("SELECT * FROM sz_index ORDER BY trade_date", conn)
-        sh_mgn = pd.read_sql("SELECT * FROM sh_margin_trade ORDER BY trade_date", conn)
-        sz_mgn = pd.read_sql("SELECT * FROM sz_margin_trade ORDER BY trade_date", conn)
-    finally:
-        conn.close()
+    sh_idx = pd.read_sql("SELECT * FROM sh_index ORDER BY trade_date", ENGINE)
+    sz_idx = pd.read_sql("SELECT * FROM sz_index ORDER BY trade_date", ENGINE)
+    sh_mgn = pd.read_sql("SELECT * FROM sh_margin_trade ORDER BY trade_date", ENGINE)
+    sz_mgn = pd.read_sql("SELECT * FROM sz_margin_trade ORDER BY trade_date", ENGINE)
 
-    # 统一日期列名
+    # 统一日期列：trade_date 已是 datetime 类型，直接赋值
     for df in [sh_idx, sz_idx, sh_mgn, sz_mgn]:
         df['date'] = pd.to_datetime(df['trade_date'])
-        df.drop(columns=['id'], inplace=True, errors='ignore')
+        df.drop(columns=['id', 'trade_date'], inplace=True, errors='ignore')
 
     # 单位换算（两融余额原始单位：元 → 亿元）
     for df in [sh_mgn, sz_mgn]:
@@ -45,7 +43,7 @@ def load_data():
                     'financing_purchase', 'financing_redeem',
                     'securities_lending_balance', 'securities_lending_sell']:
             if col in df.columns:
-                df[col] = df[col] / 1e8
+                df[col] = df[col].fillna(0) / 1e8
 
     return sh_idx, sz_idx, sh_mgn, sz_mgn
 
