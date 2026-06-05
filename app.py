@@ -277,6 +277,20 @@ def margin_ratio():
 
     return jsonify(df_to_json(merged))
 
+# ─── API：系统状态（最新数据日期）─────────────────────────────
+@app.route('/api/status')
+def api_status():
+    def latest_date(df):
+        return df['date'].max().strftime('%Y-%m-%d')
+    return jsonify({
+        'data_date': latest_date(sh_idx),
+        'sh_count':  len(sh_idx),
+        'sz_count':  len(sz_idx),
+        'sh_mgn_count': len(sh_mgn),
+        'sz_mgn_count': len(sz_mgn),
+    })
+
+
 # ─── 静态页面 ──────────────────────────────────────────────────────────────
 @app.route('/')
 def index():

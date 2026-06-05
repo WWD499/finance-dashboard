@@ -455,11 +455,24 @@
 
 <!-- ══════════════════════ SCRIPTS ══════════════════════ -->
 <script>
-const API = 'http://127.0.0.1:5000/api';
+const API = '/api';
 let charts = {};
 let idxChartType = 'area';
 let cachedCorr = null;
 let scatterData = { sh: [], sz: [] };
+let sysDataDate = '';
+
+async function fetchSysDate() {
+  try {
+    const r = await fetch('/api/status');
+    if (!r.ok) throw new Error('status');
+    const j = await r.json();
+    sysDataDate = j.data_date || '';
+  } catch (e) { sysDataDate = '2022-06-17'; }
+  return sysDataDate;
+}
+
+;
 
 // ── Utils ───────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -482,7 +495,7 @@ async function apiFetch(url) {
 }
 
 function setDateRange(prefix, range) {
-  const today = '2022-06-17'; // 数据最新日期
+  const today = sysDataDate || '2022-06-17';
   const startMap = { 'all': '1990-01-01', '5y': '2017-01-01', '3y': '2019-01-01', '1y': '2021-01-01' };
   const fields = {
     'idx': ['idxStart','idxEnd'],
@@ -1136,7 +1149,8 @@ function renderAnnualTable(id, data) {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+  await fetchSysDate();
   loadOverview();
 });
 </script>
